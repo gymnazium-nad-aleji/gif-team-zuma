@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." name="GIF encoder" default="main">
+    <property file="local-settings.ini" />
+
+    <property environment="env" />
+
+    <property name="lib.src.dir" value="src/java-image" />
+    <property name="demo.src.dir" value="src/java-demo" />
+    <property name="test.src.dir" value="src/test-java-image" />
+
+    <property name="build.dir" location="out" />
+    <property name="lib.build.dir" location="${build.dir}/classes-image" />
+    <property name="demo.build.dir" location="${build.dir}/classes-demo" />
+	<property name="jars.dir" location="${build.dir}/jars" />
+    <property name="test.build.dir" location="${build.dir}/classes-test" />
+
+    <property name="test.results.dir" location="${build.dir}/test-results" />
+
+    <property name="junit.jar.path" value="lib/junit-4.11.jar" />
+    <property name="hamcrest.jar.path" value="lib/hamcrest-core.jar" />
+
+    <target name="main" depends="compile-lib,compile-test,compile-demo" description="Default target: compile everything.">
+    </target>
+
+    <target name="compile-lib" description="Compile GIF encoding Java library.">
+        <mkdir dir="${lib.build.dir}" />
+        <javac destdir="${lib.build.dir}" debug="true" includeantruntime="false">
+            <src path="${lib.src.dir}" />
+            <compilerarg value="-Xlint:all" />
+        </javac>
+    </target>
+
+    <target name="compile-demo" description="Compile the demo code." depends="compile-lib">
+        <mkdir dir="${demo.build.dir}" />
+        <javac destdir="${demo.build.dir}" debug="true" includeantruntime="false">
+            <src path="${demo.src.dir}" />
+            <classpath>
+                <pathelement path="${lib.build.dir}" />
+            </classpath>
+            <compilerarg value="-Xlint:all" />
+        </javac>
+    </target>
+	
+	<target name="make-jars" description="Build launchable JARs" depends="compile-lib,compile-demo">
+		<mkdir dir="${jars.dir}" />
+		<jar destfile="${jars.dir}/convertor.jar">
+            <fileset dir="${demo.build.dir}" includes="**/*.class" />
+			<fileset dir="${lib.build.dir}" includes="**/*.class" />
+            <manifest>
+                <attribute name="Main-Class" value="cz.alisma.alej.prog.image.gif.Convertor" />
+            </manifest>
+		</jar>
+		
+		<jar destfile="${jars.dir}/comparator.jar">
+            <fileset dir="${demo.build.dir}" includes="**/*.class" />
+            <fileset dir="${lib.build.dir}" includes="**/*.class" />
+            <manifest>
+                <attribute name="Main-Class" value="cz.alisma.alej.prog.image.gif.Comparator" />
+            </manifest>
+        </jar>
+	</target>
+
+    <target name="compile-test" description="Compile all the test code." depends="compile-lib">
+        <mkdir dir="${test.build.dir}" />
+        <javac destdir="${test.build.dir}" debug="true" includeantruntime="false">
+            <src path="${test.src.dir}" />
+            <classpath>
+                <pathelement path="${lib.build.dir}" />
+                <pathelement path="${junit.jar.path}" />
+                <pathelement path="${hamcrest.jar.path}" />
+            </classpath>
+            <compilerarg value="-Xlint:all" />
+        </javac>
+    </target>
+
+    <target name="test" depends="compile-lib,compile-test" description="Run JUnit tests, generate HTML report.">
+        <mkdir dir="${test.results.dir}" />
+        <junit printsummary="withOutAndErr" failureproperty="junit.failed" haltonfailure="no">
+            <classpath>
+                <pathelement path="${junit.jar.path}" />
+                <pathelement path="${hamcrest.jar.path}" />
+                <pathelement path="${test.build.dir}" />
+                <pathelement path="${lib.build.dir}" />
+            </classpath>
+
+            <assertions>
+                <enable />
+            </assertions>
+
+            <formatter type="plain" />
+            <formatter type="xml" />
+
+            <batchtest fork="yes" todir="${test.results.dir}">
+                <fileset dir="${test.build.dir}">
+                    <include name="**/*Test.class" />
+                </fileset>
+            </batchtest>
+        </junit>
+        <junitreport todir="${test.results.dir}">
+            <fileset dir="${test.results.dir}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report format="frames" todir="${test.results.dir}/html" />
+        </junitreport>
+    	
+    	<fail message="JUnit test(s) failed." if="junit.failed" />
+    </target>
+
+    <target name="javadoc">
+        <mkdir dir="out/javadoc" />
+        <echo message="Running JavaDoc..." />
+        <javadoc destdir="out/javadoc" author="true" version="true" use="true" overview="${lib.src.dir}/overview.html" windowtitle="${ant.project.name}">
+            <packageset dir="${lib.src.dir}" defaultexcludes="yes" />
+            <doctitle>
+                &lt;h1&gt;GIF encoder library&lt;/h1&gt;
+            </doctitle>
+            <bottom>
+                &lt;i&gt;Copyright &amp;copy; 2016 GNA --&lt;/i&gt;
+            </bottom>
+        </javadoc>
+    </target>
+
+    <target name="demo" depends="compile-lib,compile-demo" description="Run simple demo.">
+        <java classname="cz.alisma.alej.prog.image.gif.Demo" fork="true" failonerror="true">
+            <classpath>
+                <pathelement path="${lib.build.dir}" />
+                <pathelement path="${demo.build.dir}" />
+            </classpath>
+        </java>
+    </target>
+
+    <target name="clean" description="Remove generated files.">
+        <delete dir="${build.dir}" />
+    </target>
+</project>

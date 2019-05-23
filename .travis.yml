@@ -1,0 +1,11 @@
+language: java
+
+addons:
+  apt:
+    packages:
+      - ant-optional
+
+script:
+  - ant
+  - ant demo
+  - ant test
