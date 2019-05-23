@@ -46,7 +46,7 @@ public class GifWriter {
     private static byte[] getCompressedData(RasterImage image, ColorMap map) {
         int colorCountRaw = map.getSize();
         int colorCountRounded = Utils.getNearestGreaterOrEqualPowerOfTwo(colorCountRaw);
-        int colorCount = colorCountRounded == 2 ? 4 : colorCountRounded;
+        int colorCount = (colorCountRounded == 2) ? 4 : colorCountRounded;
         int colorCountBits = Utils.getHighestSetBit(colorCount);
 
         ArrayByteOutputStream compressedOutputStreamSplitted = new ArrayByteOutputStream();
